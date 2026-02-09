@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Docentendashboard{% endblock %}
+{% block content %}
+  <div class="grid">
+    <div class="card">
+      <h1>Docentendashboard</h1>
+      <p class="muted">Maak, publiceer en beheer je quizzen.</p>
+      <a class="btn" href="{{ url_for('create_quiz') }}">Nieuwe quiz maken</a>
+    </div>
+
+    <div class="card">
+      <h2>Wat je kunt doen</h2>
+      <ul class="muted">
+        <li>Maak quizzen met brontekst en hoofdstukken</li>
+        <li>Publiceer quizzen voor leerlingen met 1 klik</li>
+        <li>Beheer klassen en zie welke quizzen actief zijn</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Klassen</h2>
+      <form method="post" action="{{ url_for('create_class') }}">
+        <label for="class_name">Klasnaam</label>
+        <input id="class_name" name="class_name" type="text" required />
+        <div style="margin-top: 12px;">
+          <button class="btn" type="submit">Klas aanmaken</button>
+        </div>
+      </form>
+
+      {% if classes %}
+        <div class="grid" style="margin-top: 16px;">
+          {% for classroom in classes %}
+            <div class="card" style="border-radius: 12px;">
+              <h3>{{ classroom.name }}</h3>
+              <p class="muted">Klascode: <strong>{{ classroom.code }}</strong></p>
+              <a class="btn ghost" href="{{ url_for('class_detail', class_id=classroom.id) }}">Bekijk leerlingen</a>
+              <form method="post" action="{{ url_for('delete_class', class_id=classroom.id) }}" onsubmit="return confirm('Deze klas verwijderen?');" style="margin-top: 8px;">
+                <button class="btn" type="submit" style="background: #b00020;">Verwijderen</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Nog geen klassen. Maak je eerste klas.</p>
+      {% endif %}
+    </div>
+
+    {% if classroom %}
+      <div class="card">
+        <h2>Leerlingen in {{ classroom.name }}</h2>
+        {% if students %}
+          <ul>
+            {% for student in students %}
+              <li>{{ student.name }} — {{ student.email }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">Nog geen leerlingen in deze klas.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Jouw quizzen</h2>
+      {% if quizzes %}
+        <div class="grid">
+          {% for quiz in quizzes %}
+            <div class="card" style="border-radius: 12px;">
+              <h3>{{ quiz.title }}</h3>
+              <p class="muted">Vak: {{ quiz.subject or "Onbekend" }}</p>
+              <p class="muted">Hoofdstuk: {{ quiz.chapter }}</p>
+              {% if quiz.classroom %}
+                <p class="muted">Klas: {{ quiz.classroom.name }} ({{ quiz.classroom.code }})</p>
+              {% endif %}
+              <p class="muted">Aangemaakt: {{ quiz.created_at.strftime('%Y-%m-%d') }}</p>
+              <p>
+                Status:
+                {% if quiz.published %}
+                  <strong>Gepubliceerd</strong>
+                {% else %}
+                  <strong>Concept</strong>
+                {% endif %}
+              </p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a class="btn ghost" href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}">Bewerken</a>
+                <a class="btn ghost" href="{{ url_for('quiz_results', quiz_id=quiz.id) }}">Resultaten</a>
+                {% if not quiz.published %}
+                  <form method="post" action="{{ url_for('publish_quiz', quiz_id=quiz.id) }}">
+                    <button class="btn secondary" type="submit">Publiceren</button>
+                  </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_quiz', quiz_id=quiz.id) }}" onsubmit="return confirm('Deze quiz verwijderen?');">
+                  <button class="btn" type="submit" style="background: #b00020;">Verwijderen</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Nog geen quizzen. Maak je eerste quiz.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

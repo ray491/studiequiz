@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}StudieQuiz{% endblock %}
+{% block content %}
+  <div class="grid grid-2">
+    <div class="card">
+      <h1>Maak quizzen van je boeken</h1>
+      <p class="muted">
+        Docenten uploaden het antwoordenboek of hoofdstuk, kiezen een hoofdstuk
+        en maken quizzen voor leerlingen.
+      </p>
+      <div style="margin-top: 16px;">
+        <a class="btn" href="{{ url_for('signup') }}">Aan de slag</a>
+        <a class="btn ghost" href="{{ url_for('login') }}">Inloggen</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Voor docenten en leerlingen</h2>
+      <p class="muted">Maak quizzen, publiceer ze en oefen ze direct online.</p>
+    </div>
+  </div>
+{% endblock %}

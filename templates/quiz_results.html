@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Resultaten - {{ quiz.title }}{% endblock %}
+{% block content %}
+  <div class="grid">
+    {% set is_math = quiz.subject == "Wiskunde" %}
+    <div class="card">
+      <h1>Resultaten: {{ quiz.title }}</h1>
+      <p class="muted">Vak: {{ quiz.subject or "Onbekend" }}</p>
+      <p class="muted">Hoofdstuk: {{ quiz.chapter }}</p>
+      {% if quiz.classroom %}
+        <p class="muted">Klas: {{ quiz.classroom.name }} ({{ quiz.classroom.code }})</p>
+      {% endif %}
+      <p class="muted">Gemiddelde score: {{ average_score }}%</p>
+    </div>
+
+    <div class="card">
+      <style>
+        .math-text {
+          font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", serif;
+        }
+      </style>
+      <h2>Meest gemaakte fouten</h2>
+      {% if question_summaries %}
+        <ol>
+          {% for item in question_summaries %}
+            <li style="margin-bottom: 12px;">
+              <div class="{% if is_math %}math-text{% endif %}" style="font-weight: 600;">{{ item.question }}</div>
+              <div class="muted">Fout: {{ item.wrong }} / {{ item.total }} ({{ item.wrong_rate }}%)</div>
+              {% if item.top_wrong %}
+                <div class="muted">Meest gekozen fout:</div>
+                <ul class="muted">
+                  {% for wrong in item.top_wrong %}
+                    <li>{{ wrong[0] }} ({{ wrong[1] }})</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p class="muted">Nog geen resultaten voor deze quiz.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Scores per leerling</h2>
+      {% if attempts %}
+        <div class="grid">
+          {% for attempt in attempts %}
+            <div class="card" style="border-radius: 12px;">
+              <h3>{{ attempt.student_name }}</h3>
+              <p class="muted">{{ attempt.student_email }}</p>
+              <p class="muted">Score: {{ attempt.score_correct }} / {{ attempt.score_total }}</p>
+              <p class="muted">Ingediend: {{ attempt.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+              {% if attempt.wrong_items %}
+                <div style="margin-top: 8px;">
+                  <p class="muted">Fouten:</p>
+                  <ul class="muted">
+                    {% for wrong in attempt.wrong_items %}
+                      <li class="{% if is_math %}math-text{% endif %}">{{ wrong.question }} — {{ wrong.user }} (juist: {{ wrong.correct }})</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% else %}
+                <p class="muted">Alles correct.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Nog geen leerlingen hebben deze quiz gemaakt.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

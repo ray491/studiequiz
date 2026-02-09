@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}StudieQuiz{% endblock %}</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f4ef;
+        --card: #ffffff;
+        --text: #1f1f1f;
+        --muted: #5f5f5f;
+        --accent: #1b5e20;
+        --accent-2: #0d3b66;
+        --border: #e2ddd4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Georgia", "Times New Roman", serif;
+        color: var(--text);
+        background: radial-gradient(circle at top left, #fffdf8, var(--bg));
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(6px);
+        position: sticky;
+        top: 0;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .nav a {
+        color: var(--text);
+        text-decoration: none;
+        margin-right: 12px;
+        font-weight: 600;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px;
+        width: 100%;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+      .grid {
+        display: grid;
+        gap: 20px;
+      }
+      .grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+      .btn {
+        display: inline-block;
+        padding: 10px 16px;
+        background: var(--accent);
+        color: white;
+        border-radius: 10px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn.secondary { background: var(--accent-2); }
+      .btn.ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .muted { color: var(--muted); }
+      form label { display: block; margin: 12px 0 6px; font-weight: 600; }
+      form input, form select, form textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-family: inherit;
+      }
+      textarea { min-height: 140px; }
+      .flash {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+        background: #fdf8ee;
+      }
+      .flash.error { background: #fdecea; border-color: #f5c2c7; }
+      .flash.success { background: #ecfdf3; border-color: #b6f0c4; }
+      .maintenance-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 243, 205, 0.92);
+        color: #3a2c1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 600;
+        z-index: 900;
+        pointer-events: none;
+        padding: 24px;
+      }
+      footer {
+        padding: 32px;
+        text-align: center;
+        color: #3f3f3f;
+        background: #ece6dc;
+        border-top: 1px solid var(--border);
+        margin-top: auto;
+        position: relative;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="nav">
+        <div>
+          <a href="{{ url_for('index') }}">StudieQuiz</a>
+        </div>
+        <div>
+          {% if current_user.is_authenticated %}
+            {% if current_user.role == 'teacher' %}
+              <a href="{{ url_for('teacher_dashboard') }}">Docentendashboard</a>
+            {% else %}
+              <a href="{{ url_for('student_dashboard') }}">Leerlingdashboard</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">Uitloggen</a>
+          {% else %}
+            {% if not maintenance_mode %}
+              <a href="{{ url_for('login') }}">Inloggen</a>
+              <a href="{{ url_for('signup') }}">Registreren</a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    {% if maintenance_mode and not is_admin and request.endpoint != 'admin_login' %}
+      <div class="maintenance-overlay">
+        Onderhoudsmodus: de website is tijdelijk niet beschikbaar.
+      </div>
+    {% endif %}
+
+    <main class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      StudieQuiz • Gemaakt voor docenten en leerlingen
+      ·
+      {% if is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+        ·
+        <a href="{{ url_for('admin_logout') }}">Admin uitloggen</a>
+      {% else %}
+        <a href="{{ url_for('admin_login') }}">Admin login</a>
+      {% endif %}
+    </footer>
+  </body>
+</html>

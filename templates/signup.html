@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Registreren{% endblock %}
+{% block content %}
+  <div class="card" style="max-width: 520px; margin: 0 auto;">
+    <h1>Account aanmaken</h1>
+    <form method="post">
+      <label for="name">Volledige naam</label>
+      <input id="name" name="name" type="text" required />
+
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" required />
+
+      <label for="password">Wachtwoord</label>
+      <input id="password" name="password" type="password" required />
+
+      <label for="role">Rol</label>
+      <select id="role" name="role" required>
+        <option value="teacher">Docent</option>
+        <option value="student">Leerling</option>
+      </select>
+
+      <div style="margin-top: 16px;">
+        <button class="btn" type="submit">Account aanmaken</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

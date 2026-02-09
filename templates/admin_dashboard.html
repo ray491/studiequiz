@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Admin dashboard{% endblock %}
+{% block content %}
+  <div class="grid">
+    <div class="card">
+      <h1>Admin dashboard</h1>
+      <p class="muted">Beheer basisinstellingen van StudieQuiz.</p>
+    </div>
+
+    <div class="card">
+      <h2>Onderhoudsmodus</h2>
+      <form method="post" action="{{ url_for('admin_maintenance') }}">
+        <label for="maintenance_mode">Status</label>
+        <select id="maintenance_mode" name="maintenance_mode">
+          <option value="off" {% if not maintenance_mode %}selected{% endif %}>Uit</option>
+          <option value="on" {% if maintenance_mode %}selected{% endif %}>Aan</option>
+        </select>
+        <div style="margin-top: 12px;">
+          <button class="btn" type="submit">Opslaan</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>AI-instellingen</h2>
+      <form method="post" action="{{ url_for('admin_settings') }}">
+        <label for="openrouter_model">OpenRouter model</label>
+        <input id="openrouter_model" name="openrouter_model" type="text" value="{{ openrouter_model }}" />
+
+        <label for="question_max">Maximum aantal vragen</label>
+        <input id="question_max" name="question_max" type="number" min="1" value="{{ question_max }}" />
+
+        <div style="margin-top: 12px;">
+          <button class="btn" type="submit">Opslaan</button>
+        </div>
+      </form>
+      <p class="muted" style="margin-top: 8px;">Deze waarden worden ook opgeslagen in je .env-bestand.</p>
+    </div>
+
+    <div class="card">
+      <h2>Opschonen</h2>
+      <form method="post" action="{{ url_for('admin_cleanup') }}" onsubmit="return confirm('Uploads en logbestand opschonen?');">
+        <p class="muted">Verwijdert alle uploads en het logbestand.</p>
+        <button class="btn" type="submit" style="background: #b00020;">Opschonen</button>
+      </form>
+    </div>
+
+  </div>
+{% endblock %}

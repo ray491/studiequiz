@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Quiz maken{% endblock %}
+{% block content %}
+  <div class="card" style="max-width: 820px; margin: 0 auto;">
+    <h1>Quiz maken</h1>
+    <form id="quiz_form" method="post" enctype="multipart/form-data" action="{{ action_url }}">
+      <input id="action_field" name="action" type="hidden" value="save" />
+      <label for="title">Titel van de quiz</label>
+      <input id="title" name="title" type="text" value="{{ title }}" required />
+
+      <label for="subject">Vak</label>
+      <select id="subject" name="subject" required>
+        {% set subjects = [
+          "Biologie",
+          "Wiskunde",
+          "Natuurkunde",
+          "Scheikunde",
+          "Aardrijkskunde",
+          "Geschiedenis",
+          "Nederlands",
+          "Engels",
+          "Duits",
+          "Frans",
+          "Economie",
+          "Informatica",
+          "Maatschappijleer",
+          "Kunst",
+          "Muziek",
+          "Lichamelijke opvoeding",
+          "Overig"
+        ] %}
+        <option value="">Selecteer een vak</option>
+        {% for item in subjects %}
+          <option value="{{ item }}" {% if subject == item %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="chapter">Hoofdstuk</label>
+      <select id="chapter" name="chapter" multiple size="6">
+        {% for heading in headings %}
+          <option value="{{ heading }}" {% if chapter_selected and heading in chapter_selected %}selected{% endif %}>{{ heading }}</option>
+        {% endfor %}
+      </select>
+      <p class="muted">Houd Ctrl ingedrukt om meerdere hoofdstukken te kiezen.</p>
+      <label for="chapter_manual" style="margin-top: 12px;">Andere hoofdstukken (kommagescheiden)</label>
+      <input id="chapter_manual" name="chapter_manual" type="text" value="{{ chapter_manual }}" />
+      <p class="muted">Gebruik de exacte hoofdstuktitel uit de tekst.</p>
+      {% if source_text and not headings %}
+        <p class="muted" style="margin-top: 8px;">Geen hoofdstukken gevonden in de tekst.</p>
+      {% endif %}
+
+      <label for="class_id">Klas</label>
+      {% if classes %}
+        <select id="class_id" name="class_id" required>
+          <option value="">Selecteer een klas</option>
+          {% for classroom in classes %}
+            <option value="{{ classroom.id }}" {% if selected_class_id == classroom.id %}selected{% endif %}>
+              {{ classroom.name }} ({{ classroom.code }})
+            </option>
+          {% endfor %}
+        </select>
+      {% else %}
+        <p class="muted">Maak eerst een klas aan in het docentendashboard.</p>
+      {% endif %}
+
+      <label for="source_pdf">PDF uploaden (optioneel)</label>
+      <input id="source_pdf" name="source_pdf" type="file" accept="application/pdf" />
+
+      <label for="source_text">Brontekst (optioneel als PDF is geupload)</label>
+      <textarea id="source_text" name="source_text">{{ source_text }}</textarea>
+
+      <label for="question_count">Aantal vragen</label>
+      <input
+        id="question_count"
+        name="question_count"
+        type="number"
+        min="1"
+        max="{{ question_max }}"
+        value="{{ question_count|default(8) }}"
+      />
+      <p class="muted">Wordt gebruikt bij automatisch genereren.</p>
+
+      {% if show_questions %}
+        <label for="questions">Vragen</label>
+        <textarea id="questions" name="questions" required>{{ questions }}</textarea>
+      {% else %}
+        <p class="muted">Vragen verschijnen hier na het genereren.</p>
+      {% endif %}
+      <p class="muted">Formaat: JSON-array van {"question": "...", "answer": "...", "image_url": "..."}.</p>
+
+      <div style="margin-top: 16px;">
+        <button class="btn" type="submit" data-action="save">{{ submit_label }}</button>
+        <button class="btn secondary" type="submit" name="publish_now" value="on" data-action="save">Nu publiceren</button>
+        <button class="btn secondary" type="submit" data-action="extract">PDF verwerken</button>
+        <button class="btn secondary" type="submit" data-action="generate">Vragen genereren</button>
+        <a class="btn ghost" href="{{ url_for('teacher_dashboard') }}">Annuleren</a>
+      </div>
+      <div id="loadingBar" style="display: none; margin-top: 12px;">
+        <div style="height: 6px; background: #e4e4e4; border-radius: 999px; overflow: hidden;">
+          <div class="loading-track"></div>
+        </div>
+        <p class="muted" style="margin-top: 8px;">PDF wordt verwerkt...</p>
+      </div>
+    </form>
+  </div>
+  <style>
+    .loading-track {
+      height: 100%;
+      width: 35%;
+      background: #1f7a5a;
+      border-radius: 999px;
+      animation: loading-slide 1.2s ease-in-out infinite;
+    }
+
+    @keyframes loading-slide {
+      0% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(320%);
+      }
+    }
+  </style>
+  <script>
+    const form = document.getElementById("quiz_form");
+    const actionField = document.getElementById("action_field");
+    const pdfInput = document.getElementById("source_pdf");
+    const actionButtons = document.querySelectorAll("button[data-action]");
+    const loadingBar = document.getElementById("loadingBar");
+    const submitButtons = form.querySelectorAll("button[type='submit']");
+
+    actionButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        actionField.value = button.dataset.action || "save";
+      });
+    });
+
+    form.addEventListener("submit", () => {
+      if (actionField.value !== "extract" && actionField.value !== "generate") {
+        return;
+      }
+      loadingBar.style.display = "block";
+      submitButtons.forEach((button) => {
+        button.disabled = true;
+      });
+    });
+
+    pdfInput.addEventListener("change", () => {
+      if (pdfInput.files && pdfInput.files.length > 0) {
+        actionField.value = "extract";
+        form.submit();
+      }
+    });
+  </script>
+{% endblock %}

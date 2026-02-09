@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Leerlingdashboard{% endblock %}
+{% block content %}
+  <div class="grid">
+    <div class="card">
+      <h1>Leerlingdashboard</h1>
+      <p class="muted">Bekijk quizzen die je docenten hebben gepubliceerd.</p>
+      <form method="post" action="{{ url_for('join_class') }}" style="margin-top: 16px;">
+        <label for="class_code">Klascode</label>
+        <input id="class_code" name="class_code" type="text" placeholder="Bijv. ABCD1234" required />
+        <div style="margin-top: 12px;">
+          <button class="btn" type="submit">Klas toevoegen</button>
+        </div>
+      </form>
+      {% if classes %}
+        <div style="margin-top: 16px;">
+          <p class="muted">Jouw klassen:</p>
+          <ul class="muted">
+            {% for classroom in classes %}
+              <li>{{ classroom.name }} ({{ classroom.code }})</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Wat je kunt doen</h2>
+      <ul class="muted">
+        <li>Sluit je aan bij een klas met een code</li>
+        <li>Open gepubliceerde quizzen en oefen direct</li>
+        <li>Bekijk je resultaat na het insturen</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Beschikbare quizzen</h2>
+      {% if quizzes %}
+        <div class="grid grid-2">
+          {% for quiz in quizzes %}
+            <div class="card" style="border-radius: 12px;">
+              <h3>{{ quiz.title }}</h3>
+              <p class="muted">Docent: {{ quiz.teacher.name }}</p>
+              <a class="btn" href="{{ url_for('quiz_detail', quiz_id=quiz.id) }}">Quiz openen</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Nog geen gepubliceerde quizzen voor jouw klassen.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

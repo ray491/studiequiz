@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }}{% endblock %}
+{% block content %}
+  <div class="grid">
+    {% set is_math = quiz.subject == "Wiskunde" %}
+    <div class="card">
+      <h1>{{ quiz.title }}</h1>
+      <p class="muted">Vak: {{ quiz.subject or "Onbekend" }}</p>
+      <p class="muted">Hoofdstuk: {{ quiz.chapter }}</p>
+      <p class="muted">Docent: {{ quiz.teacher.name }}</p>
+    </div>
+
+    <div class="card">
+      <style>
+        .math-text {
+          font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", serif;
+        }
+      </style>
+      <h2>Quiz</h2>
+      <form method="post">
+        <ol>
+          {% for item in items %}
+            <li style="margin-bottom: 12px;">
+              <div class="{% if is_math %}math-text{% endif %}" style="font-weight: 600;">{{ item.question }}</div>
+              {% if item.image_url %}
+                <img
+                  src="{{ item.image_url }}"
+                  alt="Illustratie bij vraag"
+                  style="max-width: 100%; height: auto; margin-top: 8px; border-radius: 12px;"
+                />
+              {% endif %}
+              <input type="text" name="answer_{{ loop.index0 }}" value="" />
+            </li>
+          {% endfor %}
+        </ol>
+        <button class="btn" type="submit">Antwoorden verzenden</button>
+      </form>
+    </div>
+
+    {% if results %}
+      <div class="card">
+        <h2>Resultaten</h2>
+        <p class="muted">Score: {{ results.correct }} / {{ results.total }}</p>
+        <ol>
+          {% for item in results["items"] %}
+            <li style="margin-bottom: 12px;">
+              <div class="{% if is_math %}math-text{% endif %}" style="font-weight: 600;">{{ item.question }}</div>
+              {% if item.image_url %}
+                <img
+                  src="{{ item.image_url }}"
+                  alt="Illustratie bij vraag"
+                  style="max-width: 100%; height: auto; margin-top: 8px; border-radius: 12px;"
+                />
+              {% endif %}
+              <div>Jouw antwoord: {{ item.user or "(leeg)" }}</div>
+              <div>Juiste antwoord: {{ item.correct }}</div>
+              {% if item.feedback %}
+                <div class="muted">AI feedback: {{ item.feedback }}</div>
+              {% endif %}
+              {% if item.is_correct %}
+                <div style="color: #1b5e20; font-weight: 600;">Goed</div>
+              {% else %}
+                <div style="color: #b00020; font-weight: 600;">Fout</div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+{% endblock %}
