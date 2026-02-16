@@ -18,8 +18,14 @@
           "Aardrijkskunde",
           "Geschiedenis",
           "Nederlands",
+          "Nederlands - Grammatica",
+          "Nederlands - Schrijven",
           "Engels",
+          "Engels - Grammatica",
+          "Engels - Schrijven",
           "Duits",
+          "Duits - Grammatica",
+          "Duits - Schrijven",
           "Frans",
           "Economie",
           "Informatica",
@@ -44,7 +50,7 @@
       <p class="muted">Houd Ctrl ingedrukt om meerdere hoofdstukken te kiezen.</p>
       <label for="chapter_manual" style="margin-top: 12px;">Andere hoofdstukken (kommagescheiden)</label>
       <input id="chapter_manual" name="chapter_manual" type="text" value="{{ chapter_manual }}" />
-      <p class="muted">Gebruik de exacte hoofdstuktitel uit de tekst.</p>
+      <p class="muted">Gebruik de exacte hoofdstuktitel uit de tekst of een vrije titel (AI zoekt de beste match).</p>
       {% if source_text and not headings %}
         <p class="muted" style="margin-top: 8px;">Geen hoofdstukken gevonden in de tekst.</p>
       {% endif %}
@@ -65,6 +71,19 @@
 
       <label for="source_pdf">PDF uploaden (optioneel)</label>
       <input id="source_pdf" name="source_pdf" type="file" accept="application/pdf" />
+      <button
+        id="extract_pdf_button"
+        class="btn secondary"
+        type="submit"
+        data-action="extract"
+        disabled
+        style="width: 100%; margin-top: 10px;"
+      >
+        PDF hoofdstukken verwerken
+      </button>
+      <p id="extract_pdf_hint" class="muted" style="margin-top: 6px;">
+        Upload eerst een PDF om te verwerken.
+      </p>
 
       <label for="source_text">Brontekst (optioneel als PDF is geupload)</label>
       <textarea id="source_text" name="source_text">{{ source_text }}</textarea>
@@ -86,12 +105,11 @@
       {% else %}
         <p class="muted">Vragen verschijnen hier na het genereren.</p>
       {% endif %}
-      <p class="muted">Formaat: JSON-array van {"question": "...", "answer": "...", "image_url": "..."}.</p>
+      <p class="muted">Formaat: JSON-array van {"question": "...", "answer": "...", "image_url": "...", "type": "text|multiple_choice", "options": ["..."]}.</p>
 
       <div style="margin-top: 16px;">
         <button class="btn" type="submit" data-action="save">{{ submit_label }}</button>
         <button class="btn secondary" type="submit" name="publish_now" value="on" data-action="save">Nu publiceren</button>
-        <button class="btn secondary" type="submit" data-action="extract">PDF verwerken</button>
         <button class="btn secondary" type="submit" data-action="generate">Vragen genereren</button>
         <a class="btn ghost" href="{{ url_for('teacher_dashboard') }}">Annuleren</a>
       </div>
@@ -128,6 +146,8 @@
     const actionButtons = document.querySelectorAll("button[data-action]");
     const loadingBar = document.getElementById("loadingBar");
     const submitButtons = form.querySelectorAll("button[type='submit']");
+    const extractPdfButton = document.getElementById("extract_pdf_button");
+    const extractPdfHint = document.getElementById("extract_pdf_hint");
 
     actionButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -146,10 +166,9 @@
     });
 
     pdfInput.addEventListener("change", () => {
-      if (pdfInput.files && pdfInput.files.length > 0) {
-        actionField.value = "extract";
-        form.submit();
-      }
+      const hasFile = pdfInput.files && pdfInput.files.length > 0;
+      extractPdfButton.disabled = !hasFile;
+      extractPdfHint.style.display = hasFile ? "none" : "block";
     });
   </script>
 {% endblock %}
