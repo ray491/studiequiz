@@ -5,8 +5,12 @@
     <div class="card">
       <h1>Docentendashboard</h1>
       <p class="muted">Maak, publiceer en beheer je quizzen.</p>
-      <a class="btn" href="{{ url_for('create_quiz') }}">Nieuwe quiz maken</a>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a class="btn" href="{{ url_for('create_quiz') }}">Nieuwe quiz maken</a>
+        <a class="btn ghost" href="{{ url_for('create_quiz_editor') }}">Nieuwe quiz (editor)</a>
+      </div>
     </div>
+
 
     <div class="card">
       <h2>Wat je kunt doen</h2>
@@ -49,11 +53,29 @@
       <div class="card">
         <h2>Leerlingen in {{ classroom.name }}</h2>
         {% if students %}
-          <ul>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
             {% for student in students %}
-              <li>{{ student.name }} — {{ student.email }}</li>
+              <div style="display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: #f2f2f2;">
+                {% if student.profile_image_base64 and student.profile_image_mime %}
+                  <img
+                    src="data:{{ student.profile_image_mime }};base64,{{ student.profile_image_base64 }}"
+                    alt="Profielfoto"
+                    style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;"
+                  />
+                {% else %}
+                  <div
+                    style="width: 44px; height: 44px; border-radius: 50%; background: #d6d6d6; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #444;"
+                  >
+                    {{ (student.nickname or student.name)[:1]|upper }}
+                  </div>
+                {% endif %}
+                <div>
+                  <div style="font-weight: 600;">{{ student.nickname or student.name }}</div>
+                  <div class="muted" style="font-size: 0.9rem;">{{ student.email }}</div>
+                </div>
+              </div>
             {% endfor %}
-          </ul>
+          </div>
         {% else %}
           <p class="muted">Nog geen leerlingen in deze klas.</p>
         {% endif %}
@@ -83,6 +105,7 @@
               </p>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a class="btn ghost" href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}">Bewerken</a>
+                <a class="btn ghost" href="{{ url_for('edit_quiz_questions', quiz_id=quiz.id) }}">Vragen bewerken</a>
                 <a class="btn ghost" href="{{ url_for('quiz_results', quiz_id=quiz.id) }}">Resultaten</a>
                 {% if not quiz.published %}
                   <form method="post" action="{{ url_for('publish_quiz', quiz_id=quiz.id) }}">
@@ -101,4 +124,237 @@
       {% endif %}
     </div>
   </div>
+  <div class="help-chat-widget" aria-live="polite">
+    <button id="help_chat_toggle" class="help-chat-toggle" type="button">
+      <span class="help-chat-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img" focusable="false">
+          <path
+            d="M24 6c-9.4 0-17 6.7-17 15 0 4.9 2.7 9.3 6.9 12.1l-.9 6.9 6.7-3.8c1.4.3 2.8.5 4.3.5 9.4 0 17-6.7 17-15S33.4 6 24 6Zm0 22.6c-1 0-1.8-.8-1.8-1.8s.8-1.8 1.8-1.8 1.8.8 1.8 1.8-.8 1.8-1.8 1.8Zm2.9-9.4c-1.3.9-1.8 1.4-1.8 2.7v.6h-2.4v-.9c0-2.1 1-3.2 2.6-4.2 1.2-.8 1.8-1.3 1.8-2.3 0-1.1-.9-2-2.3-2-1.3 0-2.2.6-2.9 1.7l-1.9-1.4c1-1.6 2.6-2.8 5-2.8 2.8 0 4.8 1.7 4.8 4.2 0 2.1-1.2 3.3-2.9 4.4Z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span>Help</span>
+    </button>
+    <div id="help_chat_panel" class="help-chat-panel" aria-hidden="true">
+      <div class="help-chat-header">
+        <div>
+          <div style="font-weight: 700;">Docentenhulp</div>
+          <div class="muted" style="font-size: 0.85rem;">Vraag over dashboard of editor</div>
+        </div>
+        <button id="help_chat_close" class="btn ghost" type="button">Sluiten</button>
+      </div>
+      <div id="help_chat_log" class="help-chat-log"></div>
+      <form id="help_chat_form" class="help-chat-form">
+        <input
+          id="help_chat_input"
+          type="text"
+          placeholder="Bijv. Hoe voeg ik een meerkeuzevraag toe?"
+          required
+        />
+        <button class="btn" type="submit">Vraag</button>
+      </form>
+      <div id="help_chat_loading" class="help-chat-loading" style="display: none;">
+        <div class="help-chat-loading-track"></div>
+      </div>
+      <p id="help_chat_status" class="muted" style="margin-top: 8px; display: none;"></p>
+    </div>
+  </div>
+  <style>
+    .help-chat-widget {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 1200;
+      display: grid;
+      gap: 12px;
+      align-items: end;
+    }
+    .help-chat-toggle {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      background: #1f7a5a;
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .help-chat-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      padding: 4px;
+    }
+    .help-chat-icon svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+    .help-chat-panel {
+      width: min(360px, calc(100vw - 32px));
+      height: calc(100vh - 32px);
+      background: #fffdf8;
+      border: 1px solid #e2ddd4;
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+      padding: 14px;
+      display: none;
+      gap: 12px;
+      grid-template-rows: auto 1fr auto auto;
+    }
+    .help-chat-panel.open {
+      display: grid;
+    }
+    .help-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .help-chat-log {
+      display: grid;
+      gap: 8px;
+      min-height: 0;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid #e2ddd4;
+      padding: 12px;
+      background: #ffffff;
+    }
+    .help-chat-msg {
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+    .help-chat-msg.user {
+      background: #e9f3ee;
+      border: 1px solid #cfe2d7;
+    }
+    .help-chat-msg.bot {
+      background: #ffffff;
+      border: 1px solid #e2ddd4;
+    }
+    .help-chat-form {
+      display: grid;
+      gap: 8px;
+    }
+    .help-chat-form input {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      font-size: 1rem;
+    }
+    .help-chat-loading {
+      height: 6px;
+      border-radius: 999px;
+      background: #e6e0d6;
+      overflow: hidden;
+    }
+    .help-chat-loading-track {
+      height: 100%;
+      width: 35%;
+      background: #1f7a5a;
+      border-radius: 999px;
+      animation: help-loading-slide 1.2s ease-in-out infinite;
+    }
+    @keyframes help-loading-slide {
+      0% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(320%);
+      }
+    }
+    @media (max-width: 720px) {
+      .help-chat-widget {
+        right: 16px;
+        bottom: 16px;
+      }
+      .help-chat-panel {
+        width: min(360px, calc(100vw - 24px));
+      }
+    }
+  </style>
+  <script>
+    const helpChatToggle = document.getElementById("help_chat_toggle");
+    const helpChatClose = document.getElementById("help_chat_close");
+    const helpChatPanel = document.getElementById("help_chat_panel");
+    const helpChatForm = document.getElementById("help_chat_form");
+    const helpChatInput = document.getElementById("help_chat_input");
+    const helpChatLog = document.getElementById("help_chat_log");
+    const helpChatStatus = document.getElementById("help_chat_status");
+    const helpChatLoading = document.getElementById("help_chat_loading");
+
+    const toggleHelpChat = (open) => {
+      helpChatPanel.classList.toggle("open", open);
+      helpChatPanel.setAttribute("aria-hidden", open ? "false" : "true");
+      if (open) {
+        helpChatInput.focus();
+      }
+    };
+
+    helpChatToggle.addEventListener("click", () => {
+      const isOpen = helpChatPanel.classList.contains("open");
+      toggleHelpChat(!isOpen);
+    });
+    helpChatClose.addEventListener("click", () => toggleHelpChat(false));
+
+    const appendHelpMessage = (text, type) => {
+      const message = document.createElement("div");
+      message.className = `help-chat-msg ${type}`;
+      message.textContent = text;
+      helpChatLog.appendChild(message);
+      helpChatLog.scrollTop = helpChatLog.scrollHeight;
+    };
+
+    helpChatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = helpChatInput.value.trim();
+      if (!text) {
+        return;
+      }
+      appendHelpMessage(text, "user");
+      const botMessage = document.createElement("div");
+      botMessage.className = "help-chat-msg bot";
+      botMessage.textContent = "";
+      helpChatLog.appendChild(botMessage);
+      helpChatLog.scrollTop = helpChatLog.scrollHeight;
+
+      helpChatInput.value = "";
+      helpChatInput.disabled = true;
+      helpChatStatus.textContent = "Bezig met antwoorden...";
+      helpChatStatus.style.display = "block";
+      helpChatLoading.style.display = "block";
+
+      try {
+        const response = await fetch("{{ url_for('teacher_help_chat') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          botMessage.textContent = data.error || "Er ging iets mis.";
+        } else {
+          botMessage.textContent = data.answer || "Geen antwoord ontvangen.";
+        }
+      } catch (error) {
+        botMessage.textContent = "Er ging iets mis met de verbinding.";
+      } finally {
+        helpChatInput.disabled = false;
+        helpChatLoading.style.display = "none";
+        helpChatStatus.style.display = "none";
+        helpChatInput.focus();
+      }
+    });
+  </script>
 {% endblock %}
