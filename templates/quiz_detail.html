@@ -17,7 +17,7 @@
         }
       </style>
       <h2>Quiz</h2>
-      <form method="post">
+      <form id="quiz_answer_form" method="post">
         <ol>
           {% for item in items %}
             <li style="margin-bottom: 12px;">
@@ -26,16 +26,45 @@
                 <img
                   src="{{ item.image_url }}"
                   alt="Illustratie bij vraag"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
                   style="max-width: 100%; height: auto; margin-top: 8px; border-radius: 12px;"
                 />
               {% endif %}
-              <input type="text" name="answer_{{ loop.index0 }}" value="" />
+              {% if item.type == "multiple_choice" and item.options %}
+                <div style="margin-top: 8px; display: grid; gap: 8px;">
+                  {% for option in item.options %}
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                      <input
+                        type="radio"
+                        name="answer_{{ loop.parent.index0 }}"
+                        value="{{ option }}"
+                      />
+                      <span>{{ option }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <input type="text" name="answer_{{ loop.index0 }}" value="" />
+              {% endif %}
             </li>
           {% endfor %}
         </ol>
         <button class="btn" type="submit">Antwoorden verzenden</button>
       </form>
     </div>
+
+    <script>
+      const quizAnswerForm = document.getElementById("quiz_answer_form");
+      quizAnswerForm.addEventListener("keydown", (event) => {
+        const isEnter = event.key === "Enter";
+        const tagName = event.target ? event.target.tagName : "";
+        const isFormControl = ["INPUT", "TEXTAREA", "SELECT"].includes(tagName);
+        if (isEnter && isFormControl) {
+          event.preventDefault();
+        }
+      });
+    </script>
 
     {% if results %}
       <div class="card">
@@ -49,6 +78,8 @@
                 <img
                   src="{{ item.image_url }}"
                   alt="Illustratie bij vraag"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
                   style="max-width: 100%; height: auto; margin-top: 8px; border-radius: 12px;"
                 />
               {% endif %}
