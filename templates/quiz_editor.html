@@ -1,0 +1,608 @@
+{% extends "base.html" %}
+{% block title %}Vragen bewerken{% endblock %}
+{% block content %}
+  <div class="card" style="max-width: 1200px; margin: 0 auto;">
+    <h1>Vragen bewerken</h1>
+    <p class="muted">Sleep secties om te ordenen, voeg opties en afbeeldingen toe.</p>
+    <form
+      id="question_form"
+      method="post"
+      {% if action_url %}action="{{ action_url }}"{% endif %}
+      style="margin-top: 16px;"
+    >
+      <input type="hidden" id="questions_json" name="questions_json" />
+      {% if create_mode %}
+        <div class="editor-meta">
+          <div class="editor-meta-grid">
+            <div>
+              <label for="title">Titel van de quiz</label>
+              <input id="title" name="title" type="text" value="{{ title }}" required />
+            </div>
+            <div>
+              <label for="subject">Vak</label>
+              <select id="subject" name="subject" required>
+                {% set subjects = [
+                  "Biologie",
+                  "Wiskunde",
+                  "Natuurkunde",
+                  "Scheikunde",
+                  "Aardrijkskunde",
+                  "Geschiedenis",
+                  "Nederlands",
+                  "Nederlands - Grammatica",
+                  "Nederlands - Schrijven",
+                  "Engels",
+                  "Engels - Grammatica",
+                  "Engels - Schrijven",
+                  "Duits",
+                  "Duits - Grammatica",
+                  "Duits - Schrijven",
+                  "Frans",
+                  "Economie",
+                  "Informatica",
+                  "Maatschappijleer",
+                  "Kunst",
+                  "Muziek",
+                  "Lichamelijke opvoeding",
+                  "Overig"
+                ] %}
+                <option value="">Selecteer een vak</option>
+                {% for item in subjects %}
+                  <option value="{{ item }}" {% if subject == item %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="chapter">Hoofdstuk</label>
+              <input id="chapter" name="chapter" type="text" value="{{ chapter }}" required />
+            </div>
+            <div>
+              <label for="class_id">Klas</label>
+              {% if classes %}
+                <select id="class_id" name="class_id" required>
+                  <option value="">Selecteer een klas</option>
+                  {% for classroom in classes %}
+                    <option value="{{ classroom.id }}" {% if selected_class_id == classroom.id %}selected{% endif %}>
+                      {{ classroom.name }} ({{ classroom.code }})
+                    </option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <p class="muted">Maak eerst een klas aan in het docentendashboard.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <div class="editor-layout">
+        <aside class="editor-sidebar">
+          <div class="sidebar-title">Vragen toevoegen</div>
+          <div class="sidebar-subtitle muted">Sleep naar de canvas</div>
+          <div class="sidebar-stack">
+            <div class="question-tile" draggable="true" data-type="text">
+              <div class="tile-title">Open vraag</div>
+              <div class="muted">Tekstantwoord</div>
+            </div>
+            <div class="question-tile" draggable="true" data-type="multiple_choice">
+              <div class="tile-title">Meerkeuze</div>
+              <div class="muted">Antwoordopties</div>
+            </div>
+            <div class="question-tile" draggable="true" data-type="true_false">
+              <div class="tile-title">Waar / Onwaar</div>
+              <div class="muted">Twee opties</div>
+            </div>
+          </div>
+        </aside>
+        <div id="questionList" class="editor-canvas">
+        {% for item in items %}
+          <div class="question-card" data-answer="{{ item.answer }}" data-image-url="{{ item.image_url }}" draggable="true">
+            <div class="question-header">
+              <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+              <div class="question-meta">
+                <div class="question-title">Vraagsectie</div>
+                <div class="question-hint muted">Versleep om te ordenen</div>
+              </div>
+              <button type="button" class="btn ghost remove-question">Verwijderen</button>
+            </div>
+            <div class="question-body">
+              <label>Vraag</label>
+              <input class="question-text" type="text" placeholder="Typ je vraag" value="{{ item.question }}" />
+              <div>
+                <label>Type</label>
+                <select class="question-type">
+                  <option value="text" {% if item.type == "text" %}selected{% endif %}>Open vraag</option>
+                  <option value="multiple_choice" {% if item.type == "multiple_choice" %}selected{% endif %}>Meerkeuze</option>
+                </select>
+              </div>
+              <div>
+                <label>Afbeelding uploaden</label>
+                <input class="question-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                <div class="image-preview" style="margin-top: 8px; display: none; align-items: center; gap: 12px;"></div>
+                <button type="button" class="btn ghost remove-image" style="margin-top: 8px; display: none;">Afbeelding verwijderen</button>
+              </div>
+              <div class="answer-text-row">
+                <label>Juiste antwoord</label>
+                <input class="question-answer-text" type="text" value="{{ item.answer }}" />
+              </div>
+              <div class="answer-choice-row">
+                <label>Juiste antwoord</label>
+                <select class="question-answer-select"></select>
+              </div>
+              <div class="options-block">
+                <label>Antwoorden</label>
+                <div class="options-list"></div>
+                <button type="button" class="btn secondary add-option" style="margin-top: 8px;">Optie toevoegen</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        </div>
+      </div>
+      <div style="margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <button type="submit" class="btn">Opslaan</button>
+        <a class="btn ghost" href="{{ url_for('teacher_dashboard') }}">Terug</a>
+      </div>
+    </form>
+  </div>
+  <style>
+    .editor-meta {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #e2ddd4;
+      background: #fff;
+      margin-bottom: 16px;
+    }
+    .editor-meta-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .editor-sidebar {
+      grid-column: 1;
+      position: sticky;
+      top: 110px;
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #e2ddd4;
+      background: #fffdf8;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+    }
+    .sidebar-title {
+      font-weight: 700;
+    }
+    .sidebar-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .question-tile {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #e2ddd4;
+      background: #ffffff;
+      cursor: grab;
+      display: grid;
+      gap: 4px;
+    }
+    .question-tile:active {
+      cursor: grabbing;
+    }
+    .tile-title {
+      font-weight: 700;
+    }
+    @media (max-width: 920px) {
+      .editor-layout {
+        grid-template-columns: 1fr;
+      }
+      .editor-sidebar {
+        position: static;
+        order: -1;
+      }
+    }
+    .editor-canvas {
+      grid-column: 2;
+      display: grid;
+      gap: 18px;
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(242, 238, 229, 0.6), rgba(255, 255, 255, 0.9));
+      border: 1px solid #e2ddd4;
+      position: relative;
+      overflow: hidden;
+    }
+    .editor-canvas::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(27, 94, 32, 0.08) 1px, transparent 1px);
+      background-size: 18px 18px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .question-card {
+      position: relative;
+      border: 1px solid #e2ddd4;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+      display: grid;
+      gap: 14px;
+    }
+    .question-card.dragging {
+      opacity: 0.6;
+    }
+    .question-card.drop-target {
+      border-color: #1b5e20;
+      box-shadow: 0 0 0 2px rgba(27, 94, 32, 0.2);
+    }
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px dashed #e2ddd4;
+      padding-bottom: 12px;
+    }
+    .drag-handle {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e2ddd4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      font-weight: 700;
+      color: #5f5f5f;
+      background: #f7f4ef;
+    }
+    .question-meta {
+      flex: 1;
+    }
+    .question-title {
+      font-weight: 700;
+    }
+    .question-body {
+      display: grid;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .options-list {
+      display: grid;
+      gap: 8px;
+    }
+  </style>
+  <script>
+    const list = document.getElementById("questionList");
+    const form = document.getElementById("question_form");
+    const hiddenField = document.getElementById("questions_json");
+    const tiles = document.querySelectorAll(".question-tile");
+
+    const createOptionRow = (value = "", disableRemove = false, disableInput = false) => {
+      const row = document.createElement("div");
+      row.className = "option-row";
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "option-input";
+      input.value = value;
+      input.disabled = disableInput;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn ghost remove-option";
+      remove.textContent = "Verwijderen";
+      if (disableRemove) {
+        remove.disabled = true;
+      }
+      remove.addEventListener("click", () => row.remove());
+      row.appendChild(input);
+      row.appendChild(remove);
+      return row;
+    };
+
+    const updateCardUI = (card) => {
+      const type = card.querySelector(".question-type").value;
+      const optionsBlock = card.querySelector(".options-block");
+      const answerTextRow = card.querySelector(".answer-text-row");
+      const answerChoiceRow = card.querySelector(".answer-choice-row");
+      const answerSelect = card.querySelector(".question-answer-select");
+      const answerText = card.querySelector(".question-answer-text");
+      const optionInputs = card.querySelectorAll(".option-input");
+
+      if (type === "multiple_choice") {
+        optionsBlock.style.display = "block";
+        answerChoiceRow.style.display = "block";
+        answerTextRow.style.display = "none";
+        answerSelect.innerHTML = "";
+        const currentAnswer = card.dataset.answer || "";
+        optionInputs.forEach((input) => {
+          const value = input.value.trim();
+          if (!value) {
+            return;
+          }
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          if (value === currentAnswer) {
+            option.selected = true;
+          }
+          answerSelect.appendChild(option);
+        });
+        if (!answerSelect.value) {
+          answerSelect.selectedIndex = 0;
+        }
+      } else if (type === "true_false") {
+        optionsBlock.style.display = "block";
+        answerChoiceRow.style.display = "block";
+        answerTextRow.style.display = "none";
+        const fixedOptions = ["Waar", "Onwaar"];
+        const optionRows = card.querySelectorAll(".option-row");
+        if (optionRows.length !== fixedOptions.length) {
+          optionsBlock.querySelector(".options-list").innerHTML = "";
+          fixedOptions.forEach((option) => {
+            optionsBlock.querySelector(".options-list").appendChild(createOptionRow(option, true, true));
+          });
+        }
+        answerSelect.innerHTML = "";
+        fixedOptions.forEach((option) => {
+          const selectOption = document.createElement("option");
+          selectOption.value = option;
+          selectOption.textContent = option;
+          if (option === (card.dataset.answer || "")) {
+            selectOption.selected = true;
+          }
+          answerSelect.appendChild(selectOption);
+        });
+        if (!answerSelect.value) {
+          answerSelect.selectedIndex = 0;
+        }
+        optionsBlock.querySelector(".add-option").style.display = "none";
+      } else {
+        optionsBlock.style.display = "none";
+        answerChoiceRow.style.display = "none";
+        answerTextRow.style.display = "block";
+        answerText.value = answerText.value || card.dataset.answer || "";
+        optionsBlock.querySelector(".add-option").style.display = "inline-block";
+      }
+    };
+
+    const bindCard = (card) => {
+      const optionsList = card.querySelector(".options-list");
+      const addOptionButton = card.querySelector(".add-option");
+      const removeQuestion = card.querySelector(".remove-question");
+      const typeSelect = card.querySelector(".question-type");
+      const answerSelect = card.querySelector(".question-answer-select");
+      const imageInput = card.querySelector(".question-image-file");
+      const imagePreview = card.querySelector(".image-preview");
+      const removeImageButton = card.querySelector(".remove-image");
+
+      addOptionButton.addEventListener("click", () => {
+        optionsList.appendChild(createOptionRow());
+        updateCardUI(card);
+      });
+
+      removeQuestion.addEventListener("click", () => card.remove());
+      typeSelect.addEventListener("change", () => updateCardUI(card));
+      optionsList.addEventListener("input", () => updateCardUI(card));
+      answerSelect.addEventListener("change", () => {
+        card.dataset.answer = answerSelect.value;
+      });
+
+      imageInput.addEventListener("change", () => {
+        const file = imageInput.files && imageInput.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result || "");
+          const parts = dataUrl.split(",");
+          if (parts.length < 2) {
+            return;
+          }
+          const header = parts[0];
+          const base64 = parts.slice(1).join(",");
+          const mimeMatch = header.match(/data:([^;]+);base64/);
+          const mime = mimeMatch ? mimeMatch[1] : "";
+          card.dataset.imageBase64 = base64;
+          card.dataset.imageMime = mime;
+          card.dataset.imageUrl = "";
+          imagePreview.innerHTML = `<img src="${dataUrl}" alt="Voorbeeld" style="width: 72px; height: 72px; border-radius: 10px; object-fit: cover;" />`;
+          imagePreview.style.display = "flex";
+          removeImageButton.style.display = "inline-block";
+        };
+        reader.readAsDataURL(file);
+      });
+
+      removeImageButton.addEventListener("click", () => {
+        imageInput.value = "";
+        card.dataset.imageBase64 = "";
+        card.dataset.imageMime = "";
+        card.dataset.imageUrl = "";
+        imagePreview.innerHTML = "";
+        imagePreview.style.display = "none";
+        removeImageButton.style.display = "none";
+      });
+
+      updateCardUI(card);
+    };
+
+    const createQuestionCard = (type = "text") => {
+      const card = document.createElement("div");
+      card.className = "question-card";
+      card.setAttribute("draggable", "true");
+      card.style.border = "1px solid #e2ddd4";
+      card.style.borderRadius = "14px";
+      card.style.padding = "16px";
+      card.style.background = "#fff";
+      card.innerHTML = `
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <span class="drag-handle" style="cursor: grab; font-weight: 700; color: #5f5f5f;">::</span>
+          <input class="question-text" type="text" placeholder="Vraag" value="" />
+          <button type="button" class="btn ghost remove-question" style="margin-left: auto;">Verwijderen</button>
+        </div>
+        <div style="margin-top: 12px; display: grid; gap: 12px;">
+          <div>
+            <label>Type</label>
+            <select class="question-type">
+              <option value="text" ${type === "text" ? "selected" : ""}>Open vraag</option>
+              <option value="multiple_choice" ${type === "multiple_choice" ? "selected" : ""}>Meerkeuze</option>
+              <option value="true_false" ${type === "true_false" ? "selected" : ""}>Waar / Onwaar</option>
+            </select>
+          </div>
+          <div>
+            <label>Afbeelding uploaden</label>
+            <input class="question-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+            <div class="image-preview" style="margin-top: 8px; display: none; align-items: center; gap: 12px;"></div>
+            <button type="button" class="btn ghost remove-image" style="margin-top: 8px; display: none;">Afbeelding verwijderen</button>
+          </div>
+          <div class="answer-text-row">
+            <label>Juiste antwoord</label>
+            <input class="question-answer-text" type="text" value="" />
+          </div>
+          <div class="answer-choice-row">
+            <label>Juiste antwoord</label>
+            <select class="question-answer-select"></select>
+          </div>
+          <div class="options-block">
+            <label>Antwoorden</label>
+            <div class="options-list" style="display: grid; gap: 8px;"></div>
+            <button type="button" class="btn secondary add-option" style="margin-top: 8px;">Optie toevoegen</button>
+          </div>
+        </div>
+      `;
+      return card;
+    };
+
+    const itemsData = {{ items|tojson|safe }};
+    list.querySelectorAll(".question-card").forEach((card, index) => {
+      const optionsList = card.querySelector(".options-list");
+      const options = itemsData[index]?.options || [];
+      const imageUrl = itemsData[index]?.image_url || "";
+      const imagePreview = card.querySelector(".image-preview");
+      const removeImageButton = card.querySelector(".remove-image");
+      options.forEach((option) => optionsList.appendChild(createOptionRow(option)));
+      if (imageUrl) {
+        card.dataset.imageUrl = imageUrl;
+        imagePreview.innerHTML = `<img src="${imageUrl}" alt="Voorbeeld" style="width: 72px; height: 72px; border-radius: 10px; object-fit: cover;" />`;
+        imagePreview.style.display = "flex";
+        removeImageButton.style.display = "inline-block";
+      }
+      bindCard(card);
+    });
+
+    tiles.forEach((tile) => {
+      tile.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", tile.dataset.type || "text");
+        event.dataTransfer.effectAllowed = "copy";
+      });
+    });
+
+    let dragSource = null;
+    list.addEventListener("dragstart", (event) => {
+      const card = event.target.closest(".question-card");
+      if (!card) {
+        return;
+      }
+      dragSource = card;
+      card.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+    });
+    list.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      if (event.dataTransfer.effectAllowed === "copy") {
+        event.dataTransfer.dropEffect = "copy";
+      }
+      const card = event.target.closest(".question-card");
+      if (!card || card === dragSource) {
+        return;
+      }
+      list.querySelectorAll(".question-card").forEach((item) => item.classList.remove("drop-target"));
+      card.classList.add("drop-target");
+      const rect = card.getBoundingClientRect();
+      const shouldInsertAfter = event.clientY - rect.top > rect.height / 2;
+      list.insertBefore(dragSource, shouldInsertAfter ? card.nextSibling : card);
+    });
+    list.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const droppedType = event.dataTransfer.getData("text/plain");
+      if (droppedType) {
+        const card = createQuestionCard(droppedType);
+        const target = event.target.closest(".question-card");
+        if (target) {
+          list.insertBefore(card, target.nextSibling);
+        } else {
+          list.appendChild(card);
+        }
+        bindCard(card);
+      }
+      list.querySelectorAll(".question-card").forEach((item) => item.classList.remove("drop-target"));
+      if (dragSource) {
+        dragSource.classList.remove("dragging");
+      }
+      dragSource = null;
+    });
+    list.addEventListener("dragend", () => {
+      list.querySelectorAll(".question-card").forEach((item) => item.classList.remove("drop-target", "dragging"));
+      dragSource = null;
+    });
+
+    form.addEventListener("submit", (event) => {
+      const payload = [];
+      const cards = list.querySelectorAll(".question-card");
+      cards.forEach((card) => {
+        const question = card.querySelector(".question-text").value.trim();
+        const type = card.querySelector(".question-type").value;
+        const imageUrl = card.dataset.imageUrl || "";
+        const imageBase64 = card.dataset.imageBase64 || "";
+        const imageMime = card.dataset.imageMime || "";
+        if (!question) {
+          return;
+        }
+        if (type === "multiple_choice" || type === "true_false") {
+          const options = Array.from(card.querySelectorAll(".option-input"))
+            .map((input) => input.value.trim())
+            .filter(Boolean);
+          const answerSelect = card.querySelector(".question-answer-select");
+          const answer = answerSelect.value || options[0] || "";
+          payload.push({
+            question,
+            answer,
+            image_url: imageUrl,
+            image_base64: imageBase64,
+            image_mime: imageMime,
+            type: type,
+            options,
+          });
+        } else {
+          const answer = card.querySelector(".question-answer-text").value.trim();
+          payload.push({
+            question,
+            answer,
+            image_url: imageUrl,
+            image_base64: imageBase64,
+            image_mime: imageMime,
+            type: "text",
+          });
+        }
+      });
+      if (!payload.length) {
+        event.preventDefault();
+        alert("Voeg minimaal 1 geldige vraag toe.");
+        return;
+      }
+      hiddenField.value = JSON.stringify(payload);
+    });
+  </script>
+{% endblock %}
