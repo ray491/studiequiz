@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Instellingen{% endblock %}
+{% block content %}
+  <div class="card" style="max-width: 720px; margin: 0 auto;">
+    <h1>Instellingen</h1>
+    <p class="muted">Pas je bijnaam en profielfoto aan.</p>
+    <form method="post" enctype="multipart/form-data" style="margin-top: 16px;">
+      <label for="nickname">Bijnaam</label>
+      <input id="nickname" name="nickname" type="text" value="{{ student.nickname or student.name }}" />
+
+      <label for="profile_image" style="margin-top: 12px;">Profielfoto</label>
+      <input id="profile_image" name="profile_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <p class="muted">Max 1 MB. PNG, JPG, WEBP of GIF.</p>
+
+      {% if student.profile_image_base64 and student.profile_image_mime %}
+        <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+          <img
+            src="data:{{ student.profile_image_mime }};base64,{{ student.profile_image_base64 }}"
+            alt="Profielfoto"
+            style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;"
+          />
+          <div class="muted">Huidige profielfoto</div>
+        </div>
+      {% endif %}
+
+      <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn" type="submit">Opslaan</button>
+        <a class="btn ghost" href="{{ url_for('student_dashboard') }}">Terug</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
