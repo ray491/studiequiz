@@ -38,6 +38,18 @@
     </div>
 
     <div class="card">
+      <h2>.env bewerken</h2>
+      <form method="post" action="{{ url_for('admin_env_update') }}">
+        <label for="env_text">Inhoud .env</label>
+        <textarea id="env_text" name="env_text" rows="12">{{ env_text }}</textarea>
+        <div style="margin-top: 12px;">
+          <button class="btn" type="submit">Opslaan</button>
+        </div>
+      </form>
+      <p class="muted" style="margin-top: 8px;">Let op: herstart de app om alle wijzigingen door te voeren.</p>
+    </div>
+
+    <div class="card">
       <h2>Opschonen</h2>
       <form method="post" action="{{ url_for('admin_cleanup') }}" onsubmit="return confirm('Uploads en logbestand opschonen?');">
         <p class="muted">Verwijdert alle uploads en het logbestand.</p>
